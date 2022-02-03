@@ -1,0 +1,65 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+```{r}
+ install.packages('ggplot2')
+ install.packages('tidyverse')
+ install.packages('lubridate')
+```
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+Load the required Libraries
+```{r}
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+getwd() #displays your working directory
+#setwd("/cloud/project/Data") #sets your working directory to 
+
+```
+Collect all the data required (Courtesy: https://www.kaggle.com/datasnaek/youtube-new and https://developers.google.com/youtube/v3/docs/videoCategories/list)
+
+```{r}
+USvideos <- read_csv("Data/USvideos.csv")%>%
+  select(category_id, views,likes,dislikes)%>%
+  group_by(category_id)%>%
+   summarize(total_views = sum(views), total_likes = sum(likes), total_dislikes = sum(dislikes))
+
+YoutubeCategories <- read_csv("Data/result.csv") %>%
+  rename(category_id = items__id, video_title =  items__snippet__title) %>%
+   select(category_id, video_title)
+  
+```
+Check the columns of the two dataframes
+```{r}
+colnames(USvideos)
+colnames(YoutubeCategories)
+```
+
+
+Consolidate and clean the required USvideos data for the project
+```{r}
+final_data <- merge(USvideos,YoutubeCategories,by.USvideos="category_id",by.YoutubeCategories="category_id") %>%
+  arrange(desc(total_views)) %>%
+  top_n(10,total_views)
+colnames(final_data)
+```
+Pie chart for the total views for each category id
+```{r}
+library(ggplot2)
+pie = ggplot(final_data, aes(x="", y=total_views, fill=video_title)) + geom_bar(stat="identity",width=2) + coord_polar("y",start=0) + labs(title="Most Popular Youtube Video Categories in the US") + theme_void()
+show(pie)
+```
+
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
